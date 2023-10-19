@@ -22,6 +22,7 @@ var kTHY_URL string = "https://ssthy.us/user/checkin"
 var kCUTECLOUD_RUL = "https://1.cutecloud.net/user/checkin"
 var kTHY_COOKIE_FILE = "./THY_cookie.txt"
 var kCUTECLOUD_COOKIE_FILE = "./CUTECLOUD_cookie.txt"
+var kDELEMITER = "@"
 
 // time interval
 var kINTEVAL = time.Hour*24 + time.Second*30
@@ -230,7 +231,7 @@ func CUTECLOUDCheckiner(cookie string) error {
 }
 
 func parseWeb(web string) map[string]string {
-	webs := strings.Split(web, "&")
+	webs := strings.Split(web, kDELEMITER)
 	webs_map := map[string]string{}
 	for _, w := range webs {
 		webs_map[w] = w
@@ -282,7 +283,7 @@ func readCookie(path string) string {
 func init() {
 	flag.BoolVar(&h, "h", false, "help")
 
-	flag.StringVar(&web, "w", "THY", "set target webs (& is split char) support: [THY, CUTECLOUD]")
+	flag.StringVar(&web, "w", "", "set target webs ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
 
 	flag.Usage = usage
 
