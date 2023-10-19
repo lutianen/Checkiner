@@ -20,8 +20,6 @@ import (
 // Web site
 var kTHY_URL string = "https://ssthy.us/user/checkin"
 var kCUTECLOUD_RUL = "https://1.cutecloud.net/user/checkin"
-var kTHY_COOKIE_FILE = "./THY_cookie.txt"
-var kCUTECLOUD_COOKIE_FILE = "./CUTECLOUD_cookie.txt"
 var kDELEMITER = "@"
 
 // time interval
@@ -30,7 +28,12 @@ var kINTEVAL = time.Hour*24 + time.Second*30
 var (
 	h bool
 
+	// THY
 	web string
+	// /home/username/...
+	path string
+	// web : path
+	webs map[string]string
 
 	// cookie
 	kTHY_COOKIE       string
@@ -230,17 +233,23 @@ func CUTECLOUDCheckiner(cookie string) error {
 	return err
 }
 
-func parseWeb(web string) map[string]string {
+func parseWeb(web string, path string) map[string]string {
 	webs := strings.Split(web, kDELEMITER)
+	paths := strings.Split(path, kDELEMITER)
+
 	webs_map := map[string]string{}
-	for _, w := range webs {
-		webs_map[w] = w
+	for idx, w := range webs {
+		webs_map[w] = paths[idx]
 	}
+
+	kTHY_COOKIE = readCookie(webs_map["THY"])
+	kCUTECLOUD_COOKIE = readCookie(webs_map["CUTECLOUD"])
+
 	return webs_map
 }
 
-func Checkiner(web string) error {
-	webs := parseWeb(web)
+func Checkiner(webs map[string]string) error {
+	// webs := parseWeb(web, path)
 	// Create timer
 	THY_timer := time.NewTimer(kINTEVAL)
 	CUTECLOUD_timer := time.NewTimer(kINTEVAL)
@@ -284,22 +293,20 @@ func init() {
 	flag.BoolVar(&h, "h", false, "help")
 
 	flag.StringVar(&web, "w", "", "set target webs ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
+	flag.StringVar(&path, "p", "", "set target webs cookie ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
 
 	flag.Usage = usage
-
-	kTHY_COOKIE = readCookie(kTHY_COOKIE_FILE)
-	kCUTECLOUD_COOKIE = readCookie(kCUTECLOUD_COOKIE_FILE)
 }
 
 func main() {
 	flag.Parse()
-
-	if h || web == "" || (kTHY_COOKIE == "" && kCUTECLOUD_COOKIE == "") {
+	webs = parseWeb(web, path)
+	if h || web == "" || path == "" || (kTHY_COOKIE == "" && kCUTECLOUD_COOKIE == "") {
 		flag.Usage()
 		return
 	}
 
-	err := Checkiner(web)
+	err := Checkiner(webs)
 	if err != nil {
 		exec.Command("notify-send", "-u", "critical", "Checkiner", "Checkiner failed").Run()
 	}
