@@ -273,7 +273,7 @@ func Checkiner(webs map[string]string) error {
 				}
 				CUTECLOUD_timer.Reset(kINTEVAL)
 			}
-		default:
+			// default:
 			// Nothing to do
 		}
 	}
