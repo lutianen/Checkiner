@@ -273,7 +273,7 @@ func Checkiner(webs map[string]string) error {
 				}
 				CUTECLOUD_timer.Reset(kINTEVAL)
 			}
-			// default:
+			// default: // Fix bug: Takes up a lot of CPU
 			// Nothing to do
 		}
 	}
@@ -306,7 +306,13 @@ func main() {
 		return
 	}
 
+	// Welcome
+	exec.Command("notify-send", "-u", "normal", "Checkiner", "Welcome to enjoy your time with Checkiner").Run()
+
+	// It's time to checkin
 	err := Checkiner(webs)
+
+	// Checkiner failed
 	if err != nil {
 		exec.Command("notify-send", "-u", "critical", "Checkiner", "Checkiner failed").Run()
 	}
