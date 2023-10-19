@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -23,7 +24,7 @@ var kTHY_COOKIE_FILE = "./THY_cookie.txt"
 var kCUTECLOUD_COOKIE_FILE = "./CUTECLOUD_cookie.txt"
 
 // time interval
-var kINTEVAL = time.Hour * 24
+var kINTEVAL = time.Hour*24 + time.Second*30
 
 var (
 	h bool
@@ -36,25 +37,26 @@ var (
 )
 
 // Display resoponse for JSON
-func HandleResponse(reader io.Reader) {
+func HandleResponse(reader io.Reader) error {
 	body, err := io.ReadAll(reader)
 	if err != nil {
 		fmt.Println("Read body failed: ", err)
-		return
+		return err
 	}
 
 	var dat map[string]interface{}
 	if err := json.Unmarshal(body, &dat); err != nil {
 		fmt.Println("JSON parse failed: ", err)
-		return
+		return err
 	}
 
 	for k, v := range dat {
 		fmt.Println(k, ": ", v)
 	}
+	return nil
 }
 
-func THYCheckiner(cookie string) {
+func THYCheckiner(cookie string) error {
 	kHEADERS := map[string]string{
 		"Accept":             "application/json, text/javascript, */*; q=0.01",
 		"Accept-Encoding":    "gzip, deflate, br",
@@ -88,14 +90,14 @@ func THYCheckiner(cookie string) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Error >>> POST request err: ", err)
-		return
+		return err
 	}
 	defer resp.Body.Close()
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("Status Code Error: ", resp.StatusCode)
-		return
+		return err
 	}
 
 	// Debug: response header
@@ -109,25 +111,39 @@ func THYCheckiner(cookie string) {
 
 	if resp.Header.Get("Content-Encoding") == "br" {
 		reader := brotli.NewReader(resp.Body)
-		HandleResponse(reader)
+		err := HandleResponse(reader)
+		if err != nil {
+			fmt.Println("Handle response failed: ", err)
+			return err
+		}
 	} else if resp.Header.Get("Content-Encoding") == "gzip" {
 		fmt.Println("gzip")
 
 		reader, err := gzip.NewReader(resp.Body)
 		if err != nil {
 			fmt.Println("Create gzip reader error: ", err)
-			return
+			return err
 		}
-		HandleResponse(reader)
+		err = HandleResponse(reader)
+		if err != nil {
+			fmt.Println("Handle response failed: ", err)
+			return err
+		}
 	} else if resp.Header.Get("Content-Encoding") == "deflate" {
 		reader := flate.NewReader(resp.Body)
-		HandleResponse(reader)
+		err := HandleResponse(reader)
+		if err != nil {
+			fmt.Println("Handle response failed: ", err)
+			return err
+		}
 	} else {
 		fmt.Println("Not supported Content-Encoding")
+		return err
 	}
+	return nil
 }
 
-func CUTECLOUDCheckiner(cookie string) {
+func CUTECLOUDCheckiner(cookie string) error {
 	kHEADERS := map[string]string{
 		"Accept":             "application/json, text/javascript, */*; q=0.01",
 		"Accept-Encoding":    "gzip, deflate, br",
@@ -150,6 +166,7 @@ func CUTECLOUDCheckiner(cookie string) {
 	req, err := http.NewRequest("POST", kCUTECLOUD_RUL, nil)
 	if err != nil {
 		fmt.Println("Error >>> Creating request: ", err)
+		return err
 	}
 
 	// Add header
@@ -161,14 +178,14 @@ func CUTECLOUDCheckiner(cookie string) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Error >>> POST request err: ", err)
-		return
+		return err
 	}
 	defer resp.Body.Close()
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("Status Code Error: ", resp.StatusCode)
-		return
+		return err
 	}
 
 	// Debug: response header
@@ -181,21 +198,35 @@ func CUTECLOUDCheckiner(cookie string) {
 	defer fmt.Println(">>> CuteCloud END <<<")
 	if resp.Header.Get("Content-Encoding") == "br" {
 		reader := brotli.NewReader(resp.Body)
-		HandleResponse(reader)
+		err := HandleResponse(reader)
+		if err != nil {
+			fmt.Println("Handle response failed: ", err)
+			return err
+		}
 	} else if resp.Header.Get("Content-Encoding") == "gzip" {
 		fmt.Println("gzip")
 		reader, err := gzip.NewReader(resp.Body)
 		if err != nil {
 			fmt.Println("Create gzip reader error: ", err)
-			return
+			return err
 		}
-		HandleResponse(reader)
+		err = HandleResponse(reader)
+		if err != nil {
+			fmt.Println("Handle response failed: ", err)
+			return err
+		}
 	} else if resp.Header.Get("Content-Encoding") == "deflate" {
 		reader := flate.NewReader(resp.Body)
-		HandleResponse(reader)
+		err := HandleResponse(reader)
+		if err != nil {
+			fmt.Println("Handle response failed: ", err)
+			return err
+		}
 	} else {
 		fmt.Println("Not supported Content-Encoding")
+		return err
 	}
+	return err
 }
 
 func parseWeb(web string) map[string]string {
@@ -207,7 +238,7 @@ func parseWeb(web string) map[string]string {
 	return webs_map
 }
 
-func Checkiner(web string) {
+func Checkiner(web string) error {
 	webs := parseWeb(web)
 	// Create timer
 	THY_timer := time.NewTimer(kINTEVAL)
@@ -218,12 +249,18 @@ func Checkiner(web string) {
 
 		case <-THY_timer.C:
 			if _, ok := webs["THY"]; ok {
-				THYCheckiner(kTHY_COOKIE)
+				err := THYCheckiner(kTHY_COOKIE)
+				if err != nil {
+					return err
+				}
 				THY_timer.Reset(kINTEVAL)
 			}
 		case <-CUTECLOUD_timer.C:
 			if _, ok := webs["CUTECLOUD"]; ok {
-				CUTECLOUDCheckiner(kCUTECLOUD_COOKIE)
+				err := CUTECLOUDCheckiner(kCUTECLOUD_COOKIE)
+				if err != nil {
+					return err
+				}
 				CUTECLOUD_timer.Reset(kINTEVAL)
 			}
 		default:
@@ -245,7 +282,7 @@ func readCookie(path string) string {
 func init() {
 	flag.BoolVar(&h, "h", false, "help")
 
-	flag.StringVar(&web, "w", "", "set target webs (& is split char) support: [THY, CUTECLOUD]")
+	flag.StringVar(&web, "w", "THY", "set target webs (& is split char) support: [THY, CUTECLOUD]")
 
 	flag.Usage = usage
 
@@ -261,7 +298,10 @@ func main() {
 		return
 	}
 
-	Checkiner(web)
+	err := Checkiner(web)
+	if err != nil {
+		exec.Command("notify-send", "-u", "critical", "Checkiner", "Checkiner failed").Run()
+	}
 }
 
 func usage() {
