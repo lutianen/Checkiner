@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -23,8 +24,7 @@ var kCUTECLOUD_RUL = "https://1.cutecloud.net/user/checkin"
 var kDELEMITER = "@"
 
 // time interval
-var kINTEVAL = time.Hour*24 + time.Second*30
-
+var kINTEVAL = time.Hour*3 + time.Second*3
 var (
 	h bool
 
@@ -57,6 +57,7 @@ func HandleResponse(reader io.Reader) error {
 	for k, v := range dat {
 		fmt.Println(k, ": ", v)
 	}
+	notifySend("Checkiner", "normal", "Checkin Success: "+dat["msg"].(string))
 	return nil
 }
 
@@ -112,6 +113,11 @@ func THYCheckiner(cookie string) error {
 	// br 压缩
 	fmt.Println("\n>>> THY START <<<")
 	defer fmt.Println(">>> THY END <<<")
+
+	// Cookie Expired
+	if resp.Header.Get("Content-Type") == "text/html; charset=UTF-8" {
+		return errors.New("cookie Expired")
+	}
 
 	if resp.Header.Get("Content-Encoding") == "br" {
 		reader := brotli.NewReader(resp.Body)
@@ -200,6 +206,12 @@ func CUTECLOUDCheckiner(cookie string) error {
 	// br 压缩
 	fmt.Println("\n>>> CuteCloud START <<<")
 	defer fmt.Println(">>> CuteCloud END <<<")
+
+	// Cookie Expired
+	if resp.Header.Get("Content-Type") == "text/html; charset=UTF-8" {
+		return errors.New("cookie Expired")
+	}
+
 	if resp.Header.Get("Content-Encoding") == "br" {
 		reader := brotli.NewReader(resp.Body)
 		err := HandleResponse(reader)
@@ -248,7 +260,7 @@ func parseWeb(web string, path string) map[string]string {
 	return webs_map
 }
 
-func Checkiner(webs map[string]string) error {
+func Checkiner(webs map[string]string) (string, error) {
 	// webs := parseWeb(web, path)
 	// Create timer
 	THY_timer := time.NewTimer(kINTEVAL)
@@ -261,7 +273,7 @@ func Checkiner(webs map[string]string) error {
 			if _, ok := webs["THY"]; ok {
 				err := THYCheckiner(kTHY_COOKIE)
 				if err != nil {
-					return err
+					return "THY", err
 				}
 				THY_timer.Reset(kINTEVAL)
 			}
@@ -269,7 +281,7 @@ func Checkiner(webs map[string]string) error {
 			if _, ok := webs["CUTECLOUD"]; ok {
 				err := CUTECLOUDCheckiner(kCUTECLOUD_COOKIE)
 				if err != nil {
-					return err
+					return "CUTECLOUD", err
 				}
 				CUTECLOUD_timer.Reset(kINTEVAL)
 			}
@@ -298,6 +310,10 @@ func init() {
 	flag.Usage = usage
 }
 
+func notifySend(title string, level string, body string) {
+	exec.Command("notify-send", "-u", level, title, body).Run()
+}
+
 func main() {
 	flag.Parse()
 	webs = parseWeb(web, path)
@@ -307,14 +323,14 @@ func main() {
 	}
 
 	// Welcome
-	exec.Command("notify-send", "-u", "normal", "Checkiner", "Welcome to enjoy your time with Checkiner").Run()
+	notifySend("Checkiner", "normal", "Welcome to enjoy your time with Checkiner")
 
 	// It's time to checkin
-	err := Checkiner(webs)
+	who, err := Checkiner(webs)
 
 	// Checkiner failed
 	if err != nil {
-		exec.Command("notify-send", "-u", "critical", "Checkiner", "Checkiner failed").Run()
+		notifySend("Checkiner", "critical", who+" Check in Failed: "+err.Error())
 	}
 }
 
