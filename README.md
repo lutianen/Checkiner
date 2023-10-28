@@ -16,7 +16,7 @@ ThisIsAPassword
 
 ```bash
 mkdir bin
-gob -o bin/checkiner src/checkiner.go src/main.go src/utils.go 
+go build -o bin/checkiner src/checkiner.go src/main.go src/utils.go 
 ```
 
 ## [autostart](https://wiki.archlinuxcn.org/wiki/KDE#%E8%87%AA%E5%90%AF%E5%8A%A8)
