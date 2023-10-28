@@ -48,10 +48,6 @@ var (
 	kCUTECLOUD_LOGIN_HEADER_METHOD       string = "POST"
 	kCUTECLOUD_CHECKIN_HEADER_METHOD     string = "POST"
 
-	// time interval
-	kINTEVAL time.Duration = time.Second * 3
-	// kINTEVAL time.Duration = time.Hour
-
 	kDELEMITER string = "@"
 
 	//>>>> flags
@@ -62,6 +58,10 @@ var (
 	path string
 	// web : path
 	webs map[string]string
+
+	// time interval
+	kINTEVAL time.Duration = time.Minute
+	interval int
 	// flags <<<<
 )
 

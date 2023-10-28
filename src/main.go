@@ -59,6 +59,7 @@ func init() {
 
 	flag.StringVar(&web, "w", "", "set target webs ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
 	flag.StringVar(&path, "p", "", "set target webs cookie ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
+	flag.IntVar(&interval, "i", 120, "set checkin interval (minute) (default: 120)")
 
 	flag.Usage = usage
 }
@@ -66,7 +67,9 @@ func init() {
 func main() {
 	flag.Parse()
 	webs = parseWeb(web, path)
-	if h || web == "" || path == "" {
+	kINTEVAL = time.Minute * time.Duration(interval)
+
+	if h || web == "" || path == "" || interval <= 0 {
 		flag.Usage()
 		return
 	}
@@ -87,7 +90,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr, `Checkiner version: checkiner/1.0.0
 Usage: checkiner [-h] [-w web]
 
-Example: checkiner -w THY@CUTECLOUD -p /home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/CUTECLOUD
+Example: checkiner -i 120 -w THY@CUTECLOUD -p /home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/CUTECLOUD
 
 Options:
 `)
