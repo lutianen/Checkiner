@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -61,7 +61,10 @@ var (
 
 	// time interval
 	kINTEVAL time.Duration = time.Minute
-	interval int
+	interval float64
+
+	// The log file path
+	kLOG_FILE string = "./checkiner.log"
 	// flags <<<<
 )
 
@@ -73,7 +76,8 @@ var (
 func readConfigFromFile(path string) (string, string, error) {
 	buf, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Println("Read config file error: ", err)
+		// fmt.Println("Read config file error: ", err)
+		log.Println("Read config file error: ", err)
 		return "", "", err
 	}
 	buf_str := strings.Split(string(buf), "\n")
@@ -84,4 +88,5 @@ func readConfigFromFile(path string) (string, string, error) {
 
 func notifySend(title string, level string, body string) {
 	exec.Command("notify-send", "-u", level, title, body).Run()
+	log.Println("notify-send: ", "-u", level, title, body)
 }

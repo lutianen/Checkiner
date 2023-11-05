@@ -6,8 +6,8 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -33,7 +33,8 @@ type Checkiner_t struct {
 func NewCheckiner(whoami string, login_header_accpet string, login_header_content_type string, login_header_method string, login_url string, checkin_header_method string, checkin_url string, config_file_path string) *Checkiner_t {
 	email, passwd, err := readConfigFromFile(config_file_path)
 	if err != nil {
-		fmt.Println("Read config file error: ", err)
+		// fmt.Println("Read config file error: ", err)
+		log.Fatal("Read config file error: ", err)
 		return nil
 	}
 
@@ -78,7 +79,8 @@ func (this *Checkiner_t) setRequestBody(req *http.Request) {
 func (this *Checkiner_t) handleLoginResponse(resp *http.Response, cookie *string) error {
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Status Code Error: ", resp.StatusCode)
+		// fmt.Println("Status Code Error: ", resp.StatusCode)
+		log.Println("Status Code Error: ", resp.StatusCode)
 		return errors.New("Status Code: " + string(rune(resp.StatusCode)))
 	}
 
@@ -93,7 +95,8 @@ func (this *Checkiner_t) handleLoginResponse(resp *http.Response, cookie *string
 	json.Unmarshal(buffer, &buf)
 	for k, v := range buf {
 		if k == "ret" {
-			fmt.Println(k, ":", v.(float64))
+			// fmt.Println(k, ":", v.(float64))
+			log.Println(k, ":", v.(float64))
 		} else if k == "msg" {
 			// fmt.Println(k, ":", v.(string))
 			notifySend("Checkiner", "normal", ">>> "+this.Whoami+" "+v.(string))
@@ -121,18 +124,21 @@ func (this *Checkiner_t) handleLoginResponse(resp *http.Response, cookie *string
 func (this *Checkiner_t) handleResponse(reader io.Reader) error {
 	body, err := io.ReadAll(reader)
 	if err != nil {
-		fmt.Println("Read body failed: ", err)
+		// fmt.Println("Read body failed: ", err)
+		log.Println("Read body failed: ", err)
 		return err
 	}
 
 	var dat map[string]interface{}
 	if err := json.Unmarshal(body, &dat); err != nil {
-		fmt.Println("JSON parse failed: ", err)
+		// fmt.Println("JSON parse failed: ", err)
+		log.Println("JSON parse failed: ", err)
 		return err
 	}
 
 	for k, v := range dat {
-		fmt.Println(k, ": ", v)
+		// fmt.Println(k, ": ", v)
+		log.Println(k, ": ", v)
 	}
 	notifySend("Checkiner", "normal", ">>> "+this.Whoami+" Checkin Success: "+dat["msg"].(string))
 	return nil
@@ -144,7 +150,8 @@ func (this *Checkiner_t) login() (string, error) {
 	// Create request
 	req, err := http.NewRequest(this.Login_header_method, this.Login_url, nil)
 	if err != nil {
-		fmt.Println(">>> "+this.Whoami+" Creating request: ", err)
+		// fmt.Println(">>> "+this.Whoami+" Creating request: ", err)
+		log.Println(">>> "+this.Whoami+" Creating request: ", err)
 		return cookie, err
 	}
 	this.setRequestHeader(req)
@@ -153,7 +160,8 @@ func (this *Checkiner_t) login() (string, error) {
 	// Create HTTP client and send requset
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Println(">>> "+this.Whoami+" "+this.Login_header_method+" request err: ", err)
+		// fmt.Println(">>> "+this.Whoami+" "+this.Login_header_method+" request err: ", err)
+		log.Println(">>> "+this.Whoami+" "+this.Login_header_method+" request err: ", err)
 		return cookie, err
 	}
 	defer resp.Body.Close()
@@ -165,7 +173,8 @@ func (this *Checkiner_t) login() (string, error) {
 func (this *Checkiner_t) Checkin(header_accpet string, header_content_length string, url_orign string) error {
 	cookie, err := this.login()
 	if err != nil {
-		fmt.Println(">>> "+this.Whoami+" Login error: ", err)
+		// fmt.Println(">>> "+this.Whoami+" Login error: ", err)
+		log.Println(">>> "+this.Whoami+" Login error: ", err)
 		return err
 	}
 
@@ -190,7 +199,8 @@ func (this *Checkiner_t) Checkin(header_accpet string, header_content_length str
 	// Create HTTP request
 	req, err := http.NewRequest(this.Checkin_header_method, this.Checkin_url, nil)
 	if err != nil {
-		fmt.Println(">>> "+this.Whoami+" Creating request: ", err)
+		// fmt.Println(">>> "+this.Whoami+" Creating request: ", err)
+		log.Println(">>> "+this.Whoami+" Creating request: ", err)
 		return err
 	}
 
@@ -202,14 +212,16 @@ func (this *Checkiner_t) Checkin(header_accpet string, header_content_length str
 	// Create HTTP client and send requset
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Println(">>> "+this.Whoami+" POST request err: ", err)
+		// fmt.Println(">>> "+this.Whoami+" POST request err: ", err)
+		log.Println(">>> "+this.Whoami+" POST request err: ", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println(">>> "+this.Whoami+" Status Code Error: ", resp.StatusCode)
+		// fmt.Println(">>> "+this.Whoami+" Status Code Error: ", resp.StatusCode)
+		log.Println(">>> "+this.Whoami+" Status Code Error: ", resp.StatusCode)
 		return err
 	}
 
@@ -228,30 +240,36 @@ func (this *Checkiner_t) Checkin(header_accpet string, header_content_length str
 		reader := brotli.NewReader(resp.Body)
 		err := this.handleResponse(reader)
 		if err != nil {
-			fmt.Println(">>> "+this.Whoami+" Handle response failed: ", err)
+			// fmt.Println(">>> "+this.Whoami+" Handle response failed: ", err)
+			log.Println(">>> "+this.Whoami+" Handle response failed: ", err)
 			return err
 		}
 	} else if resp.Header.Get("Content-Encoding") == "gzip" {
-		fmt.Println("gzip")
+		// fmt.Println("gzip")
+		log.Println("gzip")
 		reader, err := gzip.NewReader(resp.Body)
 		if err != nil {
-			fmt.Println(">>> "+this.Whoami+" Create gzip reader error: ", err)
+			// fmt.Println(">>> "+this.Whoami+" Create gzip reader error: ", err)
+			log.Println(">>> "+this.Whoami+" Create gzip reader error: ", err)
 			return err
 		}
 		err = this.handleResponse(reader)
 		if err != nil {
-			fmt.Println(">>> "+this.Whoami+" Handle response failed: ", err)
+			// fmt.Println(">>> "+this.Whoami+" Handle response failed: ", err)
+			log.Println(">>> "+this.Whoami+" Handle response failed: ", err)
 			return err
 		}
 	} else if resp.Header.Get("Content-Encoding") == "deflate" {
 		reader := flate.NewReader(resp.Body)
 		err := this.handleResponse(reader)
 		if err != nil {
-			fmt.Println(">>> "+this.Whoami+" Handle response failed: ", err)
+			// fmt.Println(">>> "+this.Whoami+" Handle response failed: ", err)
+			log.Println(">>> "+this.Whoami+" Handle response failed: ", err)
 			return err
 		}
 	} else {
-		fmt.Println("Not supported Content-Encoding")
+		// fmt.Println("Not supported Content-Encoding")
+		log.Println("Not supported Content-Encoding")
 		return err
 	}
 	return nil
