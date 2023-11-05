@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -59,7 +60,8 @@ func init() {
 
 	flag.StringVar(&web, "w", "", "set target webs ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
 	flag.StringVar(&path, "p", "", "set target webs cookie ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
-	flag.IntVar(&interval, "i", 120, "set checkin interval (minute) (default: 120)")
+	flag.Float64Var(&interval, "i", 30, "set checkin interval (minute)")
+	flag.StringVar(&kLOG_FILE, "l", "./checkiner.log", "set log file path")
 
 	flag.Usage = usage
 }
@@ -74,6 +76,17 @@ func main() {
 		return
 	}
 
+	// Logger
+	log_file, err := os.OpenFile(kLOG_FILE, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("Open log file error: ", err)
+		return
+	}
+	defer log_file.Close()
+
+	// Set log information to log file
+	log.SetOutput(log_file)
+
 	// Welcome
 	notifySend("Checkiner", "normal", "Welcome to enjoy your time with Checkiner")
 
@@ -87,7 +100,14 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, `Checkiner version: checkiner/1.0.0
+	// 	fmt.Fprintf(os.Stderr, `Checkiner version: checkiner/1.0.0
+	// Usage: checkiner [-h] [-w web]
+
+	// Example: checkiner -i 120 -w THY@CUTECLOUD -p /home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/CUTECLOUD
+
+	// Options:
+	// `)
+	log.Printf(`Checkiner version: checkiner/1.2.0
 Usage: checkiner [-h] [-w web]
 
 Example: checkiner -i 120 -w THY@CUTECLOUD -p /home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/CUTECLOUD

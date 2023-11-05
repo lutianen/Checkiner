@@ -25,7 +25,7 @@ go build -o bin/checkiner src/checkiner.go src/main.go src/utils.go
 # /home/tianen/.config/autostart/checkiner.desktop
 YOUR_PROJECT_DIR = /home/tianen/go/src/Checkiner # NOTE YOU MUST CHANGE THIS DIR
 [Desktop Entry]
-Exec=$YOUR_PROJECT_DIR/bin/checkiner -w THY@CUTECLOUD -p $YOUR_PROJECT_DIR/config/THY@$YOUR_PROJECT_DIR/config/CUTECLOUD
+Exec=$YOUR_PROJECT_DIR/bin/checkiner -w THY@CUTECLOUD -p $YOUR_PROJECT_DIR/config/THY@$YOUR_PROJECT_DIR/config/CUTECLOUD -i 60 -l /tmp/checkiner.log
 Icon=
 Name=checkiner
 Path=
