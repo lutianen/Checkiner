@@ -100,14 +100,7 @@ func main() {
 }
 
 func usage() {
-	// 	fmt.Fprintf(os.Stderr, `Checkiner version: checkiner/1.0.0
-	// Usage: checkiner [-h] [-w web]
-
-	// Example: checkiner -i 120 -w THY@CUTECLOUD -p /home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/CUTECLOUD
-
-	// Options:
-	// `)
-	log.Printf(`Checkiner version: checkiner/1.2.0
+	log.Printf(`Checkiner version: checkiner/1.2.1
 Usage: checkiner [-h] [-w web]
 
 Example: checkiner -i 120 -w THY@CUTECLOUD -p /home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/CUTECLOUD

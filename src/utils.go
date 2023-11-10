@@ -88,5 +88,5 @@ func readConfigFromFile(path string) (string, string, error) {
 
 func notifySend(title string, level string, body string) {
 	exec.Command("notify-send", "-u", level, title, body).Run()
-	log.Println("notify-send: ", "-u", level, title, body)
+	log.Println(title, body)
 }

@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -79,8 +80,7 @@ func (this *Checkiner_t) setRequestBody(req *http.Request) {
 func (this *Checkiner_t) handleLoginResponse(resp *http.Response, cookie *string) error {
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		// fmt.Println("Status Code Error: ", resp.StatusCode)
-		log.Println("Status Code Error: ", resp.StatusCode)
+		fmt.Println("Status Code Error: ", resp.StatusCode)
 		return errors.New("Status Code: " + string(rune(resp.StatusCode)))
 	}
 
@@ -95,8 +95,7 @@ func (this *Checkiner_t) handleLoginResponse(resp *http.Response, cookie *string
 	json.Unmarshal(buffer, &buf)
 	for k, v := range buf {
 		if k == "ret" {
-			// fmt.Println(k, ":", v.(float64))
-			log.Println(k, ":", v.(float64))
+			fmt.Println(k, ":", v.(float64))
 		} else if k == "msg" {
 			// fmt.Println(k, ":", v.(string))
 			notifySend("Checkiner", "normal", ">>> "+this.Whoami+" "+v.(string))
@@ -108,7 +107,7 @@ func (this *Checkiner_t) handleLoginResponse(resp *http.Response, cookie *string
 
 	// TAG Get the lastest cookie
 	for k, v := range resp.Header {
-		// println(k, ":", v[0])
+		// fmt.Println(k, ":", v[0])
 		if k == "Set-Cookie" {
 			for _, val := range v {
 				// fmt.Println(val)
@@ -137,10 +136,10 @@ func (this *Checkiner_t) handleResponse(reader io.Reader) error {
 	}
 
 	for k, v := range dat {
-		// fmt.Println(k, ": ", v)
-		log.Println(k, ": ", v)
+		fmt.Println(k, ": ", v)
+		// log.Println(k, ": ", v)
 	}
-	notifySend("Checkiner", "normal", ">>> "+this.Whoami+" Checkin Success: "+dat["msg"].(string))
+	notifySend("Checkiner", "normal", ">>> "+this.Whoami+" checkin success: "+dat["msg"].(string))
 	return nil
 }
 
@@ -151,7 +150,7 @@ func (this *Checkiner_t) login() (string, error) {
 	req, err := http.NewRequest(this.Login_header_method, this.Login_url, nil)
 	if err != nil {
 		// fmt.Println(">>> "+this.Whoami+" Creating request: ", err)
-		log.Println(">>> "+this.Whoami+" Creating request: ", err)
+		log.Println(">>> "+this.Whoami+" Creating request failed: ", err)
 		return cookie, err
 	}
 	this.setRequestHeader(req)
@@ -165,7 +164,11 @@ func (this *Checkiner_t) login() (string, error) {
 		return cookie, err
 	}
 	defer resp.Body.Close()
-	this.handleLoginResponse(resp, &cookie)
+	err = this.handleLoginResponse(resp, &cookie)
+
+	if err != nil {
+		return cookie, err
+	}
 
 	return cookie, nil
 }
@@ -200,7 +203,7 @@ func (this *Checkiner_t) Checkin(header_accpet string, header_content_length str
 	req, err := http.NewRequest(this.Checkin_header_method, this.Checkin_url, nil)
 	if err != nil {
 		// fmt.Println(">>> "+this.Whoami+" Creating request: ", err)
-		log.Println(">>> "+this.Whoami+" Creating request: ", err)
+		log.Println(">>> "+this.Whoami+" Creating request failed: ", err)
 		return err
 	}
 
