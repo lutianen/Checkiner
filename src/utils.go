@@ -65,6 +65,9 @@ var (
 
 	// The log file path
 	kLOG_FILE string = "./checkiner.log"
+
+	// Last day
+	kLAST_DAYS map[string]int
 	// flags <<<<
 )
 
