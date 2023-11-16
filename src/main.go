@@ -35,6 +35,7 @@ func CheckinRun(webs map[string]string) (string, error) {
 		select {
 		case <-THY_timer.C:
 			if kLAST_DAYS[kTHY_WHOAMI] != curr_day {
+				log.Printf("last_day: %d, curr_day: %d\n", kLAST_DAYS[kTHY_WHOAMI], curr_day)
 				if _, ok := webs[kTHY_WHOAMI]; ok {
 					err := THY_checker.Checkin(kTHY_CHECKIN_HEADER_ACCEPT, kTHY_HEADER_CONTENT_LENGTH, kTHY_URL_ORIGIN)
 					if err != nil {
@@ -44,11 +45,13 @@ func CheckinRun(webs map[string]string) (string, error) {
 					kLAST_DAYS[kTHY_WHOAMI] = curr_day
 				}
 			} else {
+				log.Printf("last_day: %d, curr_day: %d\n", kLAST_DAYS[kTHY_WHOAMI], curr_day)
 				THY_timer.Reset(kINTEVAL)
 				kLAST_DAYS[kTHY_WHOAMI] = curr_day
 			}
 		case <-CUTECLOUD_timer.C:
 			if kLAST_DAYS[kCUTECLOUD_WHOAMI] != curr_day {
+				log.Printf("last_day: %d, curr_day: %d\n", kLAST_DAYS[kCUTECLOUD_WHOAMI], curr_day)
 				if _, ok := webs[kCUTECLOUD_WHOAMI]; ok {
 					err := CUTECLOUD_checker.Checkin(kCUTECLOUD_CHECKIN_HEADER_ACCEPT, kCUTECLOUD_HEADER_CONTENT_LENGTH, kCUTECLOUD_URL_ORIGIN)
 					if err != nil {
@@ -58,6 +61,7 @@ func CheckinRun(webs map[string]string) (string, error) {
 					kLAST_DAYS[kCUTECLOUD_WHOAMI] = curr_day
 				}
 			} else {
+				log.Printf("last_day: %d, curr_day: %d\n", kLAST_DAYS[kCUTECLOUD_WHOAMI], curr_day)
 				THY_timer.Reset(kINTEVAL)
 				kLAST_DAYS[kCUTECLOUD_WHOAMI] = curr_day
 			}
@@ -103,6 +107,7 @@ func main() {
 	notifySend("Checkiner", "normal", "Welcome to enjoy your time with Checkiner")
 
 	// Init last day
+	kLAST_DAYS = make(map[string]int)
 	kLAST_DAYS[kTHY_WHOAMI] = -1
 	kLAST_DAYS[kCUTECLOUD_WHOAMI] = -1
 
