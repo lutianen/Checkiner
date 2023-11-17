@@ -72,7 +72,7 @@ var (
 )
 
 /**
- * Read config file
+ * TAG Read config file
  *	email: first line
  *	passwd: second line
  */

@@ -8,3 +8,6 @@ checkiner
 
 config/THY
 config/CUTECLOUD
+
+# log
+*.log 
