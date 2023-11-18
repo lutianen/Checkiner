@@ -62,7 +62,7 @@ func CheckinRun(webs map[string]string) (string, error) {
 				}
 			} else {
 				log.Printf("last_day: %d, curr_day: %d\n", kLAST_DAYS[kCUTECLOUD_WHOAMI], curr_day)
-				THY_timer.Reset(kINTEVAL)
+				CUTECLOUD_timer.Reset(kINTEVAL)
 				kLAST_DAYS[kCUTECLOUD_WHOAMI] = curr_day
 			}
 			// default: // Fix bug: Takes up a lot of CPU
