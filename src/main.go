@@ -23,8 +23,8 @@ func parseWeb(web string, path string) map[string]string {
 
 func CheckinRun(webs map[string]string) (string, error) {
 	// Create timer
-	THY_timer := time.NewTimer(kINTEVAL)
-	CUTECLOUD_timer := time.NewTimer(kINTEVAL)
+	timer := time.NewTimer(kINTEVAL)
+	defer timer.Stop()
 
 	CUTECLOUD_checker := NewCheckiner(kCUTECLOUD_WHOAMI, kCUTECLOUD_LOGIN_HEADER_ACCEPT, kCUTECLOUD_LOGIN_HEADER_CONTENT_TYPE, kCUTECLOUD_LOGIN_HEADER_METHOD, kCUTECLOUD_URL_LOGIN, kCUTECLOUD_CHECKIN_HEADER_METHOD, kCUTECLOUD_URL_CHECKIN, webs[kCUTECLOUD_WHOAMI])
 
@@ -33,42 +33,44 @@ func CheckinRun(webs map[string]string) (string, error) {
 	for {
 		curr_day := time.Time.Day(time.Now())
 		select {
-		case <-THY_timer.C:
-			if kLAST_DAYS[kTHY_WHOAMI] != curr_day {
-				log.Printf("last_day: %d, curr_day: %d\n", kLAST_DAYS[kTHY_WHOAMI], curr_day)
+		case <-timer.C:
+			if last_day != curr_day {
+				// FIXME Use channel to communicate, or others will be run in the same time
+				// thy
+				log.Printf("%s last_day: %d, curr_day: %d\n", kTHY_WHOAMI, last_day, curr_day)
 				if _, ok := webs[kTHY_WHOAMI]; ok {
 					err := THY_checker.Checkin(kTHY_CHECKIN_HEADER_ACCEPT, kTHY_HEADER_CONTENT_LENGTH, kTHY_URL_ORIGIN)
 					if err != nil {
 						return kTHY_WHOAMI, err
 					}
-					THY_timer.Reset(kINTEVAL)
-					kLAST_DAYS[kTHY_WHOAMI] = curr_day
+					last_day = curr_day
+				} else {
+					log.Printf("%s does not exist\n", kTHY_WHOAMI)
 				}
-			} else {
-				log.Printf("last_day: %d, curr_day: %d\n", kLAST_DAYS[kTHY_WHOAMI], curr_day)
-				THY_timer.Reset(kINTEVAL)
-				kLAST_DAYS[kTHY_WHOAMI] = curr_day
-			}
-		case <-CUTECLOUD_timer.C:
-			if kLAST_DAYS[kCUTECLOUD_WHOAMI] != curr_day {
-				log.Printf("last_day: %d, curr_day: %d\n", kLAST_DAYS[kCUTECLOUD_WHOAMI], curr_day)
+
+				// Cutecloud
+				log.Printf("%s last_day: %d, curr_day: %d\n", kCUTECLOUD_WHOAMI, last_day, curr_day)
 				if _, ok := webs[kCUTECLOUD_WHOAMI]; ok {
 					err := CUTECLOUD_checker.Checkin(kCUTECLOUD_CHECKIN_HEADER_ACCEPT, kCUTECLOUD_HEADER_CONTENT_LENGTH, kCUTECLOUD_URL_ORIGIN)
 					if err != nil {
 						return kCUTECLOUD_WHOAMI, err
 					}
-					CUTECLOUD_timer.Reset(kINTEVAL)
-					kLAST_DAYS[kCUTECLOUD_WHOAMI] = curr_day
+					last_day = curr_day
+				} else {
+					log.Printf("%s does not exist\n", kCUTECLOUD_WHOAMI)
 				}
+
+				timer.Reset(kINTEVAL)
 			} else {
-				log.Printf("last_day: %d, curr_day: %d\n", kLAST_DAYS[kCUTECLOUD_WHOAMI], curr_day)
-				CUTECLOUD_timer.Reset(kINTEVAL)
-				kLAST_DAYS[kCUTECLOUD_WHOAMI] = curr_day
+				log.Printf("last_day: %d, curr_day: %d\n", last_day, curr_day)
+				timer.Reset(kINTEVAL)
+				last_day = curr_day
 			}
 			// default: // Fix bug: Takes up a lot of CPU
 			// Nothing to do
 		}
 	}
+	return "", nil // NOTE It should not be here
 }
 
 func init() {
@@ -112,11 +114,12 @@ func main() {
 	kLAST_DAYS[kCUTECLOUD_WHOAMI] = -1
 
 	// It's time to checkin
-	who, err := CheckinRun(webs)
-
-	// Checkiner failed
-	if err != nil {
-		notifySend("Checkiner", "critical", who+" Check in Failed: "+err.Error())
+	for {
+		who, err := CheckinRun(webs)
+		// Checkiner failed
+		if err != nil {
+			notifySend("Checkiner", "critical", who+" Check in Failed: "+err.Error())
+		}
 	}
 }
 

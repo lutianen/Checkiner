@@ -68,6 +68,7 @@ var (
 
 	// Last day
 	kLAST_DAYS map[string]int
+	last_day   int
 	// flags <<<<
 )
 
