@@ -15,7 +15,7 @@ import (
 	"github.com/andybalholm/brotli"
 )
 
-type Checkiner_t struct {
+type Checkin struct {
 	Whoami string
 
 	Login_header_accpet       string
@@ -31,7 +31,7 @@ type Checkiner_t struct {
 	passwd string
 }
 
-func NewCheckiner(whoami string, login_header_accpet string, login_header_content_type string, login_header_method string, login_url string, checkin_header_method string, checkin_url string, config_file_path string) *Checkiner_t {
+func NewCheckiner(whoami string, login_header_accpet string, login_header_content_type string, login_header_method string, login_url string, checkin_header_method string, checkin_url string, config_file_path string) *Checkin {
 	email, passwd, err := readConfigFromFile(config_file_path)
 	if err != nil {
 		// fmt.Println("Read config file error: ", err)
@@ -39,7 +39,7 @@ func NewCheckiner(whoami string, login_header_accpet string, login_header_conten
 		return nil
 	}
 
-	return &Checkiner_t{
+	return &Checkin{
 		Whoami:                    whoami,
 		Login_header_accpet:       login_header_accpet,
 		Login_header_content_type: login_header_content_type,
@@ -55,7 +55,7 @@ func NewCheckiner(whoami string, login_header_accpet string, login_header_conten
 	}
 }
 
-func (c *Checkiner_t) setRequestHeader(req *http.Request) {
+func (c *Checkin) setRequestHeader(req *http.Request) {
 	header := map[string]string{
 		"Accept":             c.Login_header_accpet,
 		"Content-Type":       c.Login_header_content_type,
@@ -72,12 +72,12 @@ func (c *Checkiner_t) setRequestHeader(req *http.Request) {
 	}
 }
 
-func (c *Checkiner_t) setRequestBody(req *http.Request) {
+func (c *Checkin) setRequestBody(req *http.Request) {
 	data := []byte("email=" + c.email + "&passwd=" + c.passwd)
 	req.Body = io.NopCloser(bytes.NewBuffer(data))
 }
 
-func (c *Checkiner_t) handleLoginResponse(resp *http.Response, cookie *string) error {
+func (c *Checkin) handleLoginResponse(resp *http.Response, cookie *string) error {
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("Status Code Error: ", resp.StatusCode)
@@ -120,7 +120,7 @@ func (c *Checkiner_t) handleLoginResponse(resp *http.Response, cookie *string) e
 }
 
 // Display resoponse for JSON
-func (c *Checkiner_t) handleResponse(reader io.Reader) error {
+func (c *Checkin) handleResponse(reader io.Reader) error {
 	body, err := io.ReadAll(reader)
 	if err != nil {
 		// fmt.Println("Read body failed: ", err)
@@ -135,15 +135,18 @@ func (c *Checkiner_t) handleResponse(reader io.Reader) error {
 		return err
 	}
 
-	for k, v := range dat {
-		fmt.Println(k, ": ", v)
-		// log.Println(k, ": ", v)
-	}
+	/*
+		// Debug: response body
+		for k, v := range dat {
+			fmt.Println(k, ": ", v)
+			log.Println(k, ": ", v)
+		}
+	*/
 	notifySend("Checkiner", "normal", ">>> "+c.Whoami+" checkin success: "+dat["msg"].(string))
 	return nil
 }
 
-func (c *Checkiner_t) login() (string, error) {
+func (c *Checkin) login() (string, error) {
 	cookie := ""
 
 	// Create request
@@ -164,8 +167,8 @@ func (c *Checkiner_t) login() (string, error) {
 		return cookie, err
 	}
 	defer resp.Body.Close()
-	err = c.handleLoginResponse(resp, &cookie)
 
+	err = c.handleLoginResponse(resp, &cookie)
 	if err != nil {
 		return cookie, err
 	}
@@ -173,7 +176,7 @@ func (c *Checkiner_t) login() (string, error) {
 	return cookie, nil
 }
 
-func (c *Checkiner_t) Checkin(header_accpet string, header_content_length string, url_orign string) error {
+func (c *Checkin) Checkin(header_accpet string, header_content_length string, url_orign string) error {
 	cookie, err := c.login()
 	if err != nil {
 		// fmt.Println(">>> "+this.Whoami+" Login error: ", err)
@@ -228,10 +231,12 @@ func (c *Checkiner_t) Checkin(header_accpet string, header_content_length string
 		return err
 	}
 
-	// Debug: response header
-	// for k, v := range resp.Header {
-	// 	println(k, ":", v[0])
-	// }
+	/*
+		// Debug: response header
+		for k, v := range resp.Header {
+			println(k, ":", v[0])
+		}
+	*/
 
 	// br 压缩
 	// Cookie Expired

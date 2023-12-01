@@ -9,33 +9,53 @@ import (
 	"time"
 )
 
-func parseWeb(web string, path string) map[string]string {
+// setWebMap sets website and cookie path
+// map: webMap[website]cookie_path
+func setWebMap(web string, path string) map[string]string {
+	webMap := make(map[string]string)
 	webs := strings.Split(web, kDELEMITER)
 	paths := strings.Split(path, kDELEMITER)
 
-	webs_map := map[string]string{}
 	for idx, w := range webs {
-		webs_map[w] = paths[idx]
+		webMap[w] = paths[idx]
 	}
 
-	return webs_map
+	return webMap
 }
 
-func CheckinRun(webs map[string]string) (string, error) {
-	// Create timer
-	timer := time.NewTimer(kINTEVAL)
-	defer timer.Stop()
+func checkinRun(webs map[string]string) (string, error) {
+	// Create checkiner
+	THY_checker := NewCheckiner(kTHY_WHOAMI, kTHY_LOGIN_HEADER_ACCEPT, kTHY_LOGIN_HEADER_CONTENT_TYPE, kTHY_LOGIN_HEADER_METHOD, kTHY_URL_LOGIN, kTHY_CHECKIN_HEADER_METHOD, kTHY_URL_CHECKIN, webs[kTHY_WHOAMI])
 
 	CUTECLOUD_checker := NewCheckiner(kCUTECLOUD_WHOAMI, kCUTECLOUD_LOGIN_HEADER_ACCEPT, kCUTECLOUD_LOGIN_HEADER_CONTENT_TYPE, kCUTECLOUD_LOGIN_HEADER_METHOD, kCUTECLOUD_URL_LOGIN, kCUTECLOUD_CHECKIN_HEADER_METHOD, kCUTECLOUD_URL_CHECKIN, webs[kCUTECLOUD_WHOAMI])
 
-	THY_checker := NewCheckiner(kTHY_WHOAMI, kTHY_LOGIN_HEADER_ACCEPT, kTHY_LOGIN_HEADER_CONTENT_TYPE, kTHY_LOGIN_HEADER_METHOD, kTHY_URL_LOGIN, kTHY_CHECKIN_HEADER_METHOD, kTHY_URL_CHECKIN, webs[kTHY_WHOAMI])
+	// Create channel
+	ch := make(chan struct{})
 
+	// Timer
+	go func(ch chan<- struct{}) {
+		// Create timer
+		timer := time.NewTicker(kINTEVAL)
+		defer func() {
+			timer.Stop()
+			close(ch)
+		}()
+		for {
+			if _, ok := <-timer.C; !ok {
+				log.Println("Timer error")
+				return
+			}
+			ch <- struct{}{}
+		}
+	}(ch)
+
+	// Checkin
 	for {
-		curr_day := time.Time.Day(time.Now())
-		select {
-		case <-timer.C:
+		if _, ok := <-ch; ok {
+			// fmt.Println("It's time to checkin")
+
+			curr_day := time.Time.Day(time.Now())
 			if last_day != curr_day {
-				// FIXME Use channel to communicate, or others will be run in the same time
 				// thy
 				log.Printf("%s last_day: %d, curr_day: %d\n", kTHY_WHOAMI, last_day, curr_day)
 				if _, ok := webs[kTHY_WHOAMI]; ok {
@@ -59,18 +79,12 @@ func CheckinRun(webs map[string]string) (string, error) {
 				} else {
 					log.Printf("%s does not exist\n", kCUTECLOUD_WHOAMI)
 				}
-
-				timer.Reset(kINTEVAL)
 			} else {
 				log.Printf("last_day: %d, curr_day: %d\n", last_day, curr_day)
-				timer.Reset(kINTEVAL)
 				last_day = curr_day
 			}
-			// default: // Fix bug: Takes up a lot of CPU
-			// Nothing to do
 		}
 	}
-	return "", nil // NOTE It should not be here
 }
 
 func init() {
@@ -86,8 +100,8 @@ func init() {
 
 func main() {
 	flag.Parse()
-	webs = parseWeb(web, path)
-	kINTEVAL = time.Minute * time.Duration(interval)
+	webs = setWebMap(web, path)
+	kINTEVAL = time.Duration(float64(time.Minute) * interval)
 
 	if h || web == "" || path == "" || interval <= 0 {
 		flag.Usage()
@@ -115,7 +129,7 @@ func main() {
 
 	// It's time to checkin
 	for {
-		who, err := CheckinRun(webs)
+		who, err := checkinRun(webs)
 		// Checkiner failed
 		if err != nil {
 			notifySend("Checkiner", "critical", who+" Check in Failed: "+err.Error())
@@ -124,7 +138,7 @@ func main() {
 }
 
 func usage() {
-	log.Printf(`Checkiner version: checkiner/1.2.1
+	log.Printf(`Checkiner version: checkiner/1.3.0
 Usage: checkiner [-h] [-w web]
 
 Example: checkiner -i 120 -w THY@CUTECLOUD -p /home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/CUTECLOUD
