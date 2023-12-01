@@ -135,10 +135,13 @@ func (c *Checkin) handleResponse(reader io.Reader) error {
 		return err
 	}
 
-	for k, v := range dat {
-		fmt.Println(k, ": ", v)
-		// log.Println(k, ": ", v)
-	}
+	/*
+		// Debug: response body
+		for k, v := range dat {
+			fmt.Println(k, ": ", v)
+			log.Println(k, ": ", v)
+		}
+	*/
 	notifySend("Checkiner", "normal", ">>> "+c.Whoami+" checkin success: "+dat["msg"].(string))
 	return nil
 }
@@ -164,8 +167,8 @@ func (c *Checkin) login() (string, error) {
 		return cookie, err
 	}
 	defer resp.Body.Close()
-	err = c.handleLoginResponse(resp, &cookie)
 
+	err = c.handleLoginResponse(resp, &cookie)
 	if err != nil {
 		return cookie, err
 	}
@@ -228,10 +231,12 @@ func (c *Checkin) Checkin(header_accpet string, header_content_length string, ur
 		return err
 	}
 
-	// Debug: response header
-	// for k, v := range resp.Header {
-	// 	println(k, ":", v[0])
-	// }
+	/*
+		// Debug: response header
+		for k, v := range resp.Header {
+			println(k, ":", v[0])
+		}
+	*/
 
 	// br 压缩
 	// Cookie Expired
