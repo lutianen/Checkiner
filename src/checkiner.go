@@ -142,7 +142,8 @@ func (c *Checkin) handleResponse(reader io.Reader) error {
 			log.Println(k, ": ", v)
 		}
 	*/
-	notifySend("Checkiner", "normal", ">>> "+c.Whoami+" checkin success: "+dat["msg"].(string))
+	// TAG Level uses `critical` is to ensure checkin successfully for human.
+	notifySend("Checkiner", "critical", ">>> "+c.Whoami+" checkin success: "+dat["msg"].(string))
 	return nil
 }
 
