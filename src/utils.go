@@ -37,9 +37,9 @@ var (
 	kTHY_HEADER_CONTENT_LENGTH string = "0"
 
 	kCUTECLOUD_WHOAMI      string = "CUTECLOUD"
-	kCUTECLOUD_URL_ORIGIN  string = "www.cute-cloud.top"
-	kCUTECLOUD_URL_LOGIN   string = "www.cute-cloud.top/auth/login"
-	kCUTECLOUD_URL_CHECKIN string = "www.cute-cloud.top/user/checkin"
+	kCUTECLOUD_URL_ORIGIN  string = "https://www.cute-cloud.top"
+	kCUTECLOUD_URL_LOGIN   string = "https://www.cute-cloud.top/auth/login"
+	kCUTECLOUD_URL_CHECKIN string = "https://www.cute-cloud.top/user/checkin"
 
 	kCUTECLOUD_HEADER_CONTENT_LENGTH     string = "0"
 	kCUTECLOUD_LOGIN_HEADER_ACCEPT       string = "*/*;"
