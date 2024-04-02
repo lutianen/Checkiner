@@ -28,6 +28,7 @@ type Checkin struct {
 
 	// flag
 	Flag_checkined bool
+	LastDay        int
 
 	// private
 	email  string
@@ -53,6 +54,7 @@ func NewCheckiner(whoami string, login_header_accpet string, login_header_conten
 		Checkin_url:           checkin_url,
 
 		Flag_checkined: false,
+		LastDay:        -1,
 
 		// TAG  Set email and passwd by reading config file
 		email:  email,
@@ -284,7 +286,12 @@ func (c *Checkin) Checkin(header_accpet string, header_content_length string, ur
 	} else {
 		// fmt.Println("Not supported Content-Encoding")
 		log.Println("Not supported Content-Encoding")
-		return err
+		err := c.handleResponse(resp.Body)
+		if err != nil {
+			// fmt.Println(">>> "+this.Whoami+" Handle response failed: ", err)
+			log.Println(">>> "+c.Whoami+" Handle response failed: ", err)
+			return err
+		}
 	}
 	return nil
 }

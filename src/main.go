@@ -25,10 +25,21 @@ func setWebMap(web string, path string) map[string]string {
 }
 
 func checkinRun(webs map[string]string) (string, error) {
-	// Create checkiner
-	THY_checker := NewCheckiner(kTHY_WHOAMI, kTHY_LOGIN_HEADER_ACCEPT, kTHY_LOGIN_HEADER_CONTENT_TYPE, kTHY_LOGIN_HEADER_METHOD, kTHY_URL_LOGIN, kTHY_CHECKIN_HEADER_METHOD, kTHY_URL_CHECKIN, webs[kTHY_WHOAMI])
+	checkers := make([]*Checkin, 0)
 
-	CUTECLOUD_checker := NewCheckiner(kCUTECLOUD_WHOAMI, kCUTECLOUD_LOGIN_HEADER_ACCEPT, kCUTECLOUD_LOGIN_HEADER_CONTENT_TYPE, kCUTECLOUD_LOGIN_HEADER_METHOD, kCUTECLOUD_URL_LOGIN, kCUTECLOUD_CHECKIN_HEADER_METHOD, kCUTECLOUD_URL_CHECKIN, webs[kCUTECLOUD_WHOAMI])
+	for webName, webCfg := range webs {
+		// NewCheckiner()
+		fmt.Println(webName, webCfg)
+		if webName[0] == 'T' {
+			THY_checker := NewCheckiner(webName, LOGIN_HEADER_ACCEPT, LOGIN_HEADER_CONTENT_TYPE, LOGIN_HEADER_METHOD, kTHY_URL_LOGIN, CHECKIN_HEADER_METHOD, kTHY_URL_CHECKIN, webs[webName])
+
+			checkers = append(checkers, THY_checker)
+		} else {
+			CUTECLOUD_checker := NewCheckiner(webName, kCUTECLOUD_LOGIN_HEADER_ACCEPT, LOGIN_HEADER_CONTENT_TYPE, LOGIN_HEADER_METHOD, kCUTECLOUD_URL_LOGIN, CHECKIN_HEADER_METHOD, kCUTECLOUD_URL_CHECKIN, webs[webName])
+
+			checkers = append(checkers, CUTECLOUD_checker)
+		}
+	}
 
 	// Create channel
 	ch := make(chan struct{})
@@ -55,64 +66,47 @@ func checkinRun(webs map[string]string) (string, error) {
 		if _, ok := <-ch; ok {
 			// fmt.Println("It's time to checkin")
 			wg := sync.WaitGroup{}
-			wg.Add(2)
+			wg.Add(len(checkers))
 
 			curr_day := time.Time.Day(time.Now())
-			if last_day != curr_day {
-				go func() {
-					defer wg.Done()
-					if THY_checker.Flag_checkined {
-						return
-					}
 
-					// thy
-					log.Printf("%s last_day: %d, curr_day: %d\n", kTHY_WHOAMI, last_day, curr_day)
-					if _, ok := webs[kTHY_WHOAMI]; ok {
-						err := THY_checker.Checkin(kTHY_CHECKIN_HEADER_ACCEPT, kTHY_HEADER_CONTENT_LENGTH, kTHY_URL_ORIGIN)
-						if err != nil {
-							// return kTHY_WHOAMI, err
-							notifySend("Checkiner", "critical", kTHY_WHOAMI+" Check in Failed: "+err.Error())
-							THY_checker.Flag_checkined = false
+			for _, checker := range checkers {
+				fmt.Printf("curr day: %v %v", curr_day, checker)
+				go func(checker *Checkin) {
+					defer wg.Done()
+
+					if checker.LastDay != curr_day {
+						if checker.Flag_checkined {
 							return
 						}
-						THY_checker.Flag_checkined = true
-					} else {
-						log.Printf("%s does not exist\n", kTHY_WHOAMI)
-					}
-				}()
 
-				go func() {
-					defer wg.Done()
-					if CUTECLOUD_checker.Flag_checkined {
-						return
-					}
-
-					// Cutecloud
-					log.Printf("%s last_day: %d, curr_day: %d\n", kCUTECLOUD_WHOAMI, last_day, curr_day)
-					if _, ok := webs[kCUTECLOUD_WHOAMI]; ok {
-						err := CUTECLOUD_checker.Checkin(kCUTECLOUD_CHECKIN_HEADER_ACCEPT, kCUTECLOUD_HEADER_CONTENT_LENGTH, kCUTECLOUD_URL_ORIGIN)
-						if err != nil {
-							// return kCUTECLOUD_WHOAMI, err
-							notifySend("Checkiner", "critical", kCUTECLOUD_WHOAMI+" Check in Failed: "+err.Error())
-
-							CUTECLOUD_checker.Flag_checkined = false
-							return
+						// thy
+						log.Printf("%s last_day: %d, curr_day: %d\n", checker.Whoami, checker.LastDay, curr_day)
+						if _, ok := webs[checker.Whoami]; ok {
+							var err error = nil
+							if checker.Whoami[0] == 'T' {
+								err = checker.Checkin(CHECKIN_HEADER_ACCEPT, HEADER_CONTENT_LENGTH, kTHY_URL_ORIGIN)
+							} else {
+								err = checker.Checkin(CHECKIN_HEADER_ACCEPT, HEADER_CONTENT_LENGTH, kCUTECLOUD_URL_ORIGIN)
+							}
+							if err != nil {
+								notifySend("Checkiner", "critical", checker.Whoami+" Check in Failed: "+err.Error())
+								checker.Flag_checkined = false
+								return
+							}
+							checker.Flag_checkined = true
+							checker.LastDay = curr_day
+						} else {
+							log.Printf("%s does not exist\n", checker.Whoami)
 						}
-						CUTECLOUD_checker.Flag_checkined = true
 					} else {
-						log.Printf("%s does not exist\n", kCUTECLOUD_WHOAMI)
+						// fmt.Printf("Checkined tody: %v", curr_day)
+						log.Printf("Checkined tody: %v", curr_day)
 					}
-				}()
-
-				wg.Wait()
-				if THY_checker.Flag_checkined && CUTECLOUD_checker.Flag_checkined {
-					last_day = curr_day
-					THY_checker.Flag_checkined, CUTECLOUD_checker.Flag_checkined = false, false
-				}
-			} else {
-				log.Printf("last_day: %d, curr_day: %d\n", last_day, curr_day)
-				last_day = curr_day
+				}(checker)
 			}
+
+			wg.Wait()
 		}
 	}
 }
@@ -120,9 +114,10 @@ func checkinRun(webs map[string]string) (string, error) {
 func init() {
 	flag.BoolVar(&h, "h", false, "help")
 
-	flag.StringVar(&web, "w", "", "set target webs ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
-	flag.StringVar(&path, "p", "", "set target webs cookie ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
-	flag.Float64Var(&interval, "i", 30, "set checkin interval (minute)")
+	flag.StringVar(&web, "w", `THY@THY1@CUTECLOUD`, "set target webs ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
+	flag.StringVar(&path, "p", "/home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/THY_0@/home/tianen/go/src/Checkiner/config/CUTECLOUD",
+		"set target webs cookie ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
+	flag.Float64Var(&interval, "i", 10, "set checkin interval (minute)")
 	flag.StringVar(&kLOG_FILE, "l", "./checkiner.log", "set log file path")
 
 	flag.Usage = usage
@@ -151,11 +146,6 @@ func main() {
 
 	// Welcome
 	notifySend("Checkiner", "normal", "Welcome to enjoy your time with Checkiner")
-
-	// Init last day
-	kLAST_DAYS = make(map[string]int)
-	kLAST_DAYS[kTHY_WHOAMI] = -1
-	kLAST_DAYS[kCUTECLOUD_WHOAMI] = -1
 
 	// It's time to checkin
 	for {

@@ -23,30 +23,25 @@ var (
 	}
 
 	// Web site
-	kTHY_WHOAMI      string = "THY"
-	kTHY_URL_ORIGIN  string = "https://ssthy.us"
-	kTHY_URL_LOGIN   string = "https://ssthy.us/auth/login"
-	kTHY_URL_CHECKIN string = "https://ssthy.us/user/checkin"
 
-	kTHY_LOGIN_HEADER_ACCEPT       string = "application/json, text/javascript, */*; q=0.01"
-	kTHY_LOGIN_HEADER_CONTENT_TYPE string = "application/x-www-form-urlencoded; charset=UTF-8"
-	kTHY_LOGIN_HEADER_METHOD       string = "POST"
+	// https://portal.ssthy.us/
+	// kTHY_URL_ORIGIN  string = "https://ssthy.us"
+	kTHY_URL_ORIGIN  string = "https://portal.ssthy.us"
+	kTHY_URL_LOGIN   string = "https://portal.ssthy.us/auth/login"
+	kTHY_URL_CHECKIN string = "https://portal.ssthy.us/user/checkin"
 
-	kTHY_CHECKIN_HEADER_ACCEPT string = "application/json, text/javascript, */*; q=0.01"
-	kTHY_CHECKIN_HEADER_METHOD string = "POST"
-	kTHY_HEADER_CONTENT_LENGTH string = "0"
-
-	kCUTECLOUD_WHOAMI      string = "CUTECLOUD"
 	kCUTECLOUD_URL_ORIGIN  string = "https://www.cute-cloud.top"
 	kCUTECLOUD_URL_LOGIN   string = "https://www.cute-cloud.top/auth/login"
 	kCUTECLOUD_URL_CHECKIN string = "https://www.cute-cloud.top/user/checkin"
 
-	kCUTECLOUD_HEADER_CONTENT_LENGTH     string = "0"
-	kCUTECLOUD_LOGIN_HEADER_ACCEPT       string = "*/*;"
-	kCUTECLOUD_CHECKIN_HEADER_ACCEPT     string = "application/json, text/javascript, */*; q=0.01"
-	kCUTECLOUD_LOGIN_HEADER_CONTENT_TYPE string = "application/x-www-form-urlencoded; charset=UTF-8"
-	kCUTECLOUD_LOGIN_HEADER_METHOD       string = "POST"
-	kCUTECLOUD_CHECKIN_HEADER_METHOD     string = "POST"
+	CHECKIN_HEADER_ACCEPT     string = "application/json, text/javascript, */*; q=0.01"
+	LOGIN_HEADER_ACCEPT       string = "application/json, text/javascript, */*; q=0.01"
+	LOGIN_HEADER_CONTENT_TYPE string = "application/x-www-form-urlencoded; charset=UTF-8"
+	LOGIN_HEADER_METHOD       string = "POST"
+	CHECKIN_HEADER_METHOD     string = "POST"
+	HEADER_CONTENT_LENGTH     string = "0"
+
+	kCUTECLOUD_LOGIN_HEADER_ACCEPT string = "*/*;"
 
 	kDELEMITER string = "@"
 
@@ -65,10 +60,6 @@ var (
 
 	// The log file path
 	kLOG_FILE string = "./checkiner.log"
-
-	// Last day
-	kLAST_DAYS map[string]int
-	last_day   int
 	// flags <<<<
 )
 
