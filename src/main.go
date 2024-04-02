@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -53,31 +54,60 @@ func checkinRun(webs map[string]string) (string, error) {
 	for {
 		if _, ok := <-ch; ok {
 			// fmt.Println("It's time to checkin")
+			wg := sync.WaitGroup{}
+			wg.Add(2)
 
 			curr_day := time.Time.Day(time.Now())
 			if last_day != curr_day {
-				// thy
-				log.Printf("%s last_day: %d, curr_day: %d\n", kTHY_WHOAMI, last_day, curr_day)
-				if _, ok := webs[kTHY_WHOAMI]; ok {
-					err := THY_checker.Checkin(kTHY_CHECKIN_HEADER_ACCEPT, kTHY_HEADER_CONTENT_LENGTH, kTHY_URL_ORIGIN)
-					if err != nil {
-						return kTHY_WHOAMI, err
+				go func() {
+					defer wg.Done()
+					if THY_checker.Flag_checkined {
+						return
 					}
-					last_day = curr_day
-				} else {
-					log.Printf("%s does not exist\n", kTHY_WHOAMI)
-				}
 
-				// Cutecloud
-				log.Printf("%s last_day: %d, curr_day: %d\n", kCUTECLOUD_WHOAMI, last_day, curr_day)
-				if _, ok := webs[kCUTECLOUD_WHOAMI]; ok {
-					err := CUTECLOUD_checker.Checkin(kCUTECLOUD_CHECKIN_HEADER_ACCEPT, kCUTECLOUD_HEADER_CONTENT_LENGTH, kCUTECLOUD_URL_ORIGIN)
-					if err != nil {
-						return kCUTECLOUD_WHOAMI, err
+					// thy
+					log.Printf("%s last_day: %d, curr_day: %d\n", kTHY_WHOAMI, last_day, curr_day)
+					if _, ok := webs[kTHY_WHOAMI]; ok {
+						err := THY_checker.Checkin(kTHY_CHECKIN_HEADER_ACCEPT, kTHY_HEADER_CONTENT_LENGTH, kTHY_URL_ORIGIN)
+						if err != nil {
+							// return kTHY_WHOAMI, err
+							notifySend("Checkiner", "critical", kTHY_WHOAMI+" Check in Failed: "+err.Error())
+							THY_checker.Flag_checkined = false
+							return
+						}
+						THY_checker.Flag_checkined = true
+					} else {
+						log.Printf("%s does not exist\n", kTHY_WHOAMI)
 					}
+				}()
+
+				go func() {
+					defer wg.Done()
+					if CUTECLOUD_checker.Flag_checkined {
+						return
+					}
+
+					// Cutecloud
+					log.Printf("%s last_day: %d, curr_day: %d\n", kCUTECLOUD_WHOAMI, last_day, curr_day)
+					if _, ok := webs[kCUTECLOUD_WHOAMI]; ok {
+						err := CUTECLOUD_checker.Checkin(kCUTECLOUD_CHECKIN_HEADER_ACCEPT, kCUTECLOUD_HEADER_CONTENT_LENGTH, kCUTECLOUD_URL_ORIGIN)
+						if err != nil {
+							// return kCUTECLOUD_WHOAMI, err
+							notifySend("Checkiner", "critical", kCUTECLOUD_WHOAMI+" Check in Failed: "+err.Error())
+
+							CUTECLOUD_checker.Flag_checkined = false
+							return
+						}
+						CUTECLOUD_checker.Flag_checkined = true
+					} else {
+						log.Printf("%s does not exist\n", kCUTECLOUD_WHOAMI)
+					}
+				}()
+
+				wg.Wait()
+				if THY_checker.Flag_checkined && CUTECLOUD_checker.Flag_checkined {
 					last_day = curr_day
-				} else {
-					log.Printf("%s does not exist\n", kCUTECLOUD_WHOAMI)
+					THY_checker.Flag_checkined, CUTECLOUD_checker.Flag_checkined = false, false
 				}
 			} else {
 				log.Printf("last_day: %d, curr_day: %d\n", last_day, curr_day)

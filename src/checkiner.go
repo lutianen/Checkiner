@@ -26,6 +26,9 @@ type Checkin struct {
 	Checkin_header_method string
 	Checkin_url           string
 
+	// flag
+	Flag_checkined bool
+
 	// private
 	email  string
 	passwd string
@@ -48,6 +51,8 @@ func NewCheckiner(whoami string, login_header_accpet string, login_header_conten
 
 		Checkin_header_method: checkin_header_method,
 		Checkin_url:           checkin_url,
+
+		Flag_checkined: false,
 
 		// TAG  Set email and passwd by reading config file
 		email:  email,
