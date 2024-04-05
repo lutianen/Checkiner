@@ -91,7 +91,6 @@ func checkinRun(webs map[string]string) (string, error) {
 							}
 							if err != nil {
 								notifySend("Checkiner", "critical", checker.Whoami+" Check in Failed: "+err.Error())
-								checker.Flag_checkined = false
 								return
 							}
 							checker.Flag_checkined = true
@@ -102,6 +101,7 @@ func checkinRun(webs map[string]string) (string, error) {
 					} else {
 						// fmt.Printf("Checkined tody: %v", curr_day)
 						log.Printf("Checkined tody: %v", curr_day)
+						checker.Flag_checkined = false
 					}
 				}(checker)
 			}
@@ -115,7 +115,7 @@ func init() {
 	flag.BoolVar(&h, "h", false, "help")
 
 	flag.StringVar(&web, "w", `THY@THY1@CUTECLOUD`, "set target webs ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
-	flag.StringVar(&path, "p", "/home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/THY_0@/home/tianen/go/src/Checkiner/config/CUTECLOUD",
+	flag.StringVar(&path, "p", "/home/tianen/go/src/Checkiner/config/THY@/home/tianen/go/src/Checkiner/config/THY0@/home/tianen/go/src/Checkiner/config/CUTECLOUD",
 		"set target webs cookie ("+kDELEMITER+" is split char) support: [THY, CUTECLOUD]")
 	flag.Float64Var(&interval, "i", 10, "set checkin interval (minute)")
 	flag.StringVar(&kLOG_FILE, "l", "./checkiner.log", "set log file path")
