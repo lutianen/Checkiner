@@ -6,9 +6,8 @@ checkiner
 
 .vscode
 
-config/THY
-config/THY0
-config/CUTECLOUD
+config/*
+!config/example
 
 # log
 *.log 
