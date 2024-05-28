@@ -23,12 +23,11 @@ var (
 	}
 
 	// Web site
+	// FIXME Due to the change of web site, please configure it with file.
 
-	// https://portal.ssthy.us/
-	// kTHY_URL_ORIGIN  string = "https://ssthy.us"
-	kTHY_URL_ORIGIN  string = "https://portal.ssthy.us"
-	kTHY_URL_LOGIN   string = "https://portal.ssthy.us/auth/login"
-	kTHY_URL_CHECKIN string = "https://portal.ssthy.us/user/checkin"
+	kTHY_URL_ORIGIN  string = "https://fly.ssthy.us/"
+	kTHY_URL_LOGIN   string = "https://fly.ssthy.us/auth/login"
+	kTHY_URL_CHECKIN string = "https://fly.ssthy.us/user/checkin"
 
 	kCUTECLOUD_URL_ORIGIN  string = "https://www.cute-cloud.top"
 	kCUTECLOUD_URL_LOGIN   string = "https://www.cute-cloud.top/auth/login"
