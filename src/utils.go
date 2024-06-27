@@ -86,7 +86,8 @@ func notifySend(title string, level string, body string) {
 	case "linux":
 		exec.Command("notify-send", "-u", level, title, body).Run()
 	case "darwin":
-		exec.Command("osascript", "-e", "display notification \""+body+"\" with title \""+title+"\"").Run()
+		str := "display notification \"" + body + "\" with title \"" + title + "\""
+		exec.Command("osascript", "-e", str).Run()
 	case "windows":
 		panic("Not implemented on Windows")
 	default:
