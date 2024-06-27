@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -81,6 +82,15 @@ func readConfigFromFile(path string) (string, string, error) {
 }
 
 func notifySend(title string, level string, body string) {
-	exec.Command("notify-send", "-u", level, title, body).Run()
+	switch runtime.GOOS {
+	case "linux":
+		exec.Command("notify-send", "-u", level, title, body).Run()
+	case "darwin":
+		exec.Command("osascript", "-e", "display notification \""+body+"\" with title \""+title+"\"").Run()
+	case "windows":
+		panic("Not implemented on Windows")
+	default:
+		panic("Unsupported OS")
+	}
 	log.Println(title, body)
 }
